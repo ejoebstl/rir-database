@@ -5,6 +5,7 @@ __pycache__/
 
 # Data
 download/
+lists/
 wav.imported/
 wav.normalized/
 db.json

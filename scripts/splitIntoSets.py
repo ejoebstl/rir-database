@@ -6,29 +6,28 @@ import util
 
 ListDir = 'lists'
 
-class RirSet:
-	def __init__(self, name, share = None):
+class RirSet(set):
+	def __init__(self, name, share=None):
 		self.name = name
 		self.share = share
-		self.rirs = set()
-
-	def __len__(self):
-		return len(self.rirs)
-
-	def add(self, rir):
-		self.rirs.add(rir)
 
 	def missing(self, totalRirs):
-		return len(self.rirs) / totalRirs - self.share
+		return len(self) / totalRirs - self.share
 
-	def save(self, folder):
+	def save(self, folder, silent=False):
+		if not silent: print('{} set: {} RIRs'.format(self.name, len(self)))
 		filename = os.path.join(folder, self.name + '.rirs')
 		with open(filename, 'w') as f:
-			f.write('\n'.join(sorted(list(self.rirs))))
+			f.write('\n'.join(sorted(list(self))))
+
+	def load(self, folder):
+		filename = os.path.join(folder, self.name + '.rirs')
+		with open(filename) as f:
+			for line in f:
+				self.add(line.strip())
 
 
-def main(dbFilename, maxLenEasy = 2.5):
-
+def main(dbFilename):
 	print('Splitting RIRs into sets...')
 	sets = [
 		RirSet('train', 0.8),
@@ -45,27 +44,69 @@ def main(dbFilename, maxLenEasy = 2.5):
 	for i in range(1, len(rirs)):
 		si = np.argmin([s.missing(i) for s in sets])
 		sets[si].add(rirs[i])
-	
-	easy = RirSet('train.easy'.format(maxLenEasy))
-	hard = RirSet('train.hard'.format(maxLenEasy))
-	for rir in sets[0].rirs:
-		if rirDb[rir]['length'] > maxLenEasy:
-			hard.add(rir)
-		else:
-			easy.add(rir)
-	sets.append(easy)
-	sets.append(hard)
 
 	# safe set files
 	util.createDirectory(ListDir)
 	for s in sets:
-		print('{} set: {}'.format(s.name, len(s)))
 		s.save(ListDir)
 
+
+def createMoreLists(dbFilename, maxLenEasy=2.5, room='classroom'):
+	print('Creating additional lists...')
+
+	# open database
+	rirDb = json.load(open(dbFilename))
+	rirs = sorted(list(rirDb.keys()))
+	
+	train = RirSet('train')
+	test = RirSet('test')
+	dev = RirSet('dev')
+	train.load(ListDir)
+	test.load(ListDir)
+	dev.load(ListDir)
+
+	print('Splitting train set into hard and easy RIRs according to length.') # TODO: use reverberation time (RT60)
+	easy = RirSet('train.easy')
+	hard = RirSet('train.hard')
+	for rir in rirs:
+		if rir in train:
+			if rirDb[rir]['length'] > maxLenEasy:
+				hard.add(rir)
+			else:
+				easy.add(rir)
+	easy.save(ListDir)
+	hard.save(ListDir)
+
+	print('Creating sets containing only OMNI {}.'.format(room))
+	roomTrain = RirSet(room + '.train')
+	roomTrainSmall = RirSet(room + '.train.small')
+	roomTest = RirSet(room + '.test')
+	roomDev = RirSet(room + '.dev')
+	for i, rir in enumerate(rirs):
+		if rir.startswith('omni') and room in rir:
+			if rir in train:
+				roomTrain.add(rir)
+				if i % 10 == 0:
+					roomTrainSmall.add(rir)
+			elif rir in test:
+				roomTest.add(rir)
+			else:
+				assert rir in dev
+				roomDev.add(rir)
+	omniListDir = os.path.join(ListDir, 'omni')
+	util.createDirectory(omniListDir)
+	roomTrain.save(omniListDir)
+	roomTrainSmall.save(omniListDir)
+	roomTest.save(omniListDir)
+	roomDev.save(omniListDir)
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Split RIRs into different sets and create a text file with the RIR IDs for each set')
 	parser.add_argument('-db', '--database', type=str, default='db.json')
+	parser.add_argument('--more', action='store_true')
 	args = parser.parse_args()
 	main(args.database)
+	if args.more:
+		createMoreLists(args.database)
+
