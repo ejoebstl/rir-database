@@ -32,7 +32,7 @@ def importRirs(downloadDir, insertIntoDbF):
 
 		bar = util.ConsoleProgressBar()
 		bar.start('Import OMNI %s' % room)
-		for i, file in enumerate(files):
+		for i, file in enumerate(sorted(files)): # we sort to get same identifiers cross-platform
 			identifier = '{:04d}_{}_{}'.format(j, room, util.baseFilename(file))
 			j += 1
 			insertIntoDbF(file, identifier, {

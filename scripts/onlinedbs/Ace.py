@@ -30,7 +30,7 @@ def importRirs(downloadDir, insertIntoDbF):
 
 	bar = util.ConsoleProgressBar()
 	bar.start('Import ACE')
-	for i, file in enumerate(files):
+	for i, file in enumerate(sorted(files)): # we sort to get same identifiers cross-platform
 		try:
 			*_, room, measurement, _ = util.pathParts(file)
 		except:

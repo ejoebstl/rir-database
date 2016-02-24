@@ -49,7 +49,7 @@ def importRirs(downloadDir, insertIntoDbF):
 
 	bar = util.ConsoleProgressBar()
 	bar.start('Import RWCP')
-	for i, file in enumerate(files):
+	for i, file in enumerate(sorted(files)): # we sort to get same identifiers cross-platform
 		m = pattern.search(file)
 		assert m, 'Could parse room from path ({})'.format(file)
 		room = m.group(2)

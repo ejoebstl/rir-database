@@ -33,7 +33,7 @@ def importRirs(downloadDir, insertIntoDbF):
 
 	bar = util.ConsoleProgressBar()
 	bar.start('Import MARDY')
-	for i, file in enumerate(files):
+	for i, file in enumerate(sorted(files)): # we sort to get same identifiers cross-platform
 		filename = basename(file)
 		m = re.search(r'ir_(\d)_([LCR])_(\d).wav', filename)
 		assert m, 'Could not parse rir info from filename {}'.format(filename)

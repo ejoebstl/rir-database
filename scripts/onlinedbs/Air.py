@@ -133,7 +133,7 @@ def importRirs(downloadDir, insertIntoDbF):
 
 	bar = util.ConsoleProgressBar()
 	bar.start('Import AIR')
-	for i, file in enumerate(files):
+	for i, file in enumerate(sorted(files)): # we sort to get same identifiers cross-platform
 		x, info = loadAirRir(file)
 		info['source'] = 'AIR'
 		identifier = '{:04d}_{}_{}'.format(i, info['rir_type'][:2], info['room'])
