@@ -3,6 +3,7 @@ import json
 import argparse
 import numpy as np
 import util
+import re
 
 ListDir = 'lists'
 
@@ -27,7 +28,7 @@ class RirSet(set):
 				self.add(line.strip())
 
 
-def main(dbFilename):
+def createLists(dbFilename):
 	print('Splitting RIRs into sets...')
 	sets = [
 		RirSet('train', 0.8),
@@ -51,7 +52,7 @@ def main(dbFilename):
 		s.save(ListDir)
 
 
-def createMoreLists(dbFilename, maxLenEasy=2.5, room='classroom'):
+def createMoreLists(dbFilename, regex=r'omni_\d+_classroom', prefix='omni/classroom'):
 	print('Creating additional lists...')
 
 	# open database
@@ -65,48 +66,51 @@ def createMoreLists(dbFilename, maxLenEasy=2.5, room='classroom'):
 	test.load(ListDir)
 	dev.load(ListDir)
 
-	print('Splitting train set into hard and easy RIRs according to length.') # TODO: use reverberation time (RT60)
-	easy = RirSet('train.easy')
-	hard = RirSet('train.hard')
-	for rir in rirs:
-		if rir in train:
-			if rirDb[rir]['length'] > maxLenEasy:
-				hard.add(rir)
-			else:
-				easy.add(rir)
-	easy.save(ListDir)
-	hard.save(ListDir)
+	# old, but maybe useful once I found a better way to separate hard and easy RIRs
+	# print('Splitting train set into hard and easy RIRs according to length.') # TODO: use reverberation time (RT60)
+	# easy = RirSet('train.easy')
+	# hard = RirSet('train.hard')
+	# for rir in rirs:
+	# 	if rir in train:
+	# 		if rirDb[rir]['length'] > 2.5:
+	# 			hard.add(rir)
+	# 		else:
+	# 			easy.add(rir)
+	# easy.save(ListDir)
+	# hard.save(ListDir)
 
-	print('Creating sets containing only OMNI {}.'.format(room))
-	roomTrain = RirSet(room + '.train')
-	roomTrainSmall = RirSet(room + '.train.small')
-	roomTest = RirSet(room + '.test')
-	roomDev = RirSet(room + '.dev')
-	for i, rir in enumerate(rirs):
-		if rir.startswith('omni') and room in rir:
+	print('Creating subsets with room impulse responses matching \'{}\' in {}'.format(regex, prefix))
+	mustMatch = re.compile(regex)
+	subdir, filenamePrefix = os.path.split(prefix)
+	subdir = os.path.join(ListDir, subdir)
+
+	subTrain = RirSet(filenamePrefix + '.train')
+	subTest = RirSet(filenamePrefix + '.test')
+	subDev = RirSet(filenamePrefix + '.dev')
+	for rir in rirs:
+		if mustMatch.match(rir):
 			if rir in train:
-				roomTrain.add(rir)
-				if i % 10 == 0:
-					roomTrainSmall.add(rir)
+				subTrain.add(rir)
 			elif rir in test:
-				roomTest.add(rir)
+				subTest.add(rir)
 			else:
 				assert rir in dev
-				roomDev.add(rir)
-	omniListDir = os.path.join(ListDir, 'omni')
-	util.createDirectory(omniListDir)
-	roomTrain.save(omniListDir)
-	roomTrainSmall.save(omniListDir)
-	roomTest.save(omniListDir)
-	roomDev.save(omniListDir)
+				subDev.add(rir)
+
+	util.createDirectory(subdir)
+	subTrain.save(subdir)
+	subTest.save(subdir)
+	subDev.save(subdir)
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Split RIRs into different sets and create a text file with the RIR IDs for each set')
 	parser.add_argument('-db', '--database', type=str, default='db.json')
-	parser.add_argument('--more', action='store_true')
+	parser.add_argument('--regex', type=str)
+	parser.add_argument('--prefix', type=str)
 	args = parser.parse_args()
-	main(args.database)
-	if args.more:
-		createMoreLists(args.database)
+	
+	createLists(args.database)
+	if args.regex and args.prefix:
+		createMoreLists(args.database, args.regex, args.prefix)
 
