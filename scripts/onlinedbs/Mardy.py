@@ -10,7 +10,7 @@ Website: http://www.commsp.ee.ic.ac.uk/~sap/resources/mardy-multichannel-acousti
 
 License: ?
 
-Paper: ?
+Paper: Jimi YC Wen, Nikolay D Gaubitch, Emanuël AP Habets, Tony Myatt, and Patrick A Naylor. "Evaluation of speech dereverberation algorithms using the MARDY database", 2006
 """
 
 Positions = {
