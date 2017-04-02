@@ -21,3 +21,11 @@ python3 scripts/normalize.py -fs 16000
 # to save some disk space you can delete the downloaded archives
 rm -rf download
 ```
+
+### A note on installation
+
+This script collection depends on `scikits.samplerate`, which does not have an official python3 version. For running this script collection, you will need to install a form of `scikits.samplerate` which supports python3: 
+
+```
+pip install git+https://github.com/gregorias/samplerate.git
+```
