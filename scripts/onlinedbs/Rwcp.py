@@ -57,7 +57,7 @@ def importRirs(downloadDir, insertIntoDbF):
 
 		x, fs = sf.read(file, dtype='float32', **RawFormat)
 		x /= max(abs(x))
-		x = (3**15 * x).astype(np.int16)
+		x = (2**15 * x).astype(np.int16)
 
 		insertIntoDbF((x, fs), identifier, {
 			'source': 'RWCP',
