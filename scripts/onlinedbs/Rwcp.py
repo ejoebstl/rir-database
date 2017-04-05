@@ -4,6 +4,7 @@ from os.path import join
 import numpy as np
 import soundfile as sf
 import util
+import matplotlib.pyplot as plt
 
 """
 Name: RWCP Sound Scene Database
@@ -55,9 +56,15 @@ def importRirs(downloadDir, insertIntoDbF):
 		room = m.group(2)
 		identifier = '{:04d}_{}_{}'.format(i, room.lower(), m.group(3))
 
+
+		#plt.figure(1)
 		x, fs = sf.read(file, dtype='float32', **RawFormat)
+		#plt.plot(x)
 		x /= max(abs(x))
-		x = (3**15 * x).astype(np.int16)
+		x = (2**16 * x).astype(np.int16)
+		
+		#plt.plot(x)
+		#plt.show()
 
 		insertIntoDbF((x, fs), identifier, {
 			'source': 'RWCP',

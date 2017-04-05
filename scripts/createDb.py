@@ -25,7 +25,7 @@ def main(dbFilename='db.json', deleteBefore=False, sources=[]):
 		id = '{}_{}'.format(onlineDbId, identifier)
 		if id in rirDb:
 			return False
-
+		
 		info['id'] = id
 		info['filename'] = os.path.join(ImportDir, id + '.wav')
 		rirDb[id] = info
